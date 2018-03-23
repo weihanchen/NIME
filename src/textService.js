@@ -18,11 +18,7 @@ const SPECIAL_KEY_EVENT = [
 
 module.exports = {
 
-  textReducer(request, preState = {}) {
-    return preState;
-  },
+  textReducer: async(request, preState = {}) => preState,
 
-  response(request, state) {
-    return {success: true, seqNum: request['seqNum']};
-  }
+  response: async(request, state) => ({success: true, seqNum: request['seqNum']})
 };
