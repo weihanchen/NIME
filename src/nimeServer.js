@@ -7,9 +7,9 @@ const { initService, handleRequest } = require('./requestHandler');
 
 const createServer = (services = []) => {
   const connections = {};
-  
+
   // handle client requests
-  const handleClientRequest = async (clientId, request) => {
+  const handleClientRequest = async (connections, clientId, request) => {
     try {
       debug(clientId);
       debug(request);
@@ -20,15 +20,17 @@ const createServer = (services = []) => {
       }
 
       if (request['method'] === 'init') {
-        let { service, state, response } = await initService(request, services);
+        const res = await initService(request, services);
+        const { service, state, response } = res;
         connections[clientId] = { service, state };
         debug(response);
         return response;
       } else {
-        let { state, response } = await handleRequest(
+        const res = await handleRequest(
           request,
           connections[clientId]
         );
+        const { state, response } = res;
         connections[clientId].state = state;
         debug(response);
         return response;
@@ -81,7 +83,7 @@ const createServer = (services = []) => {
             removeClient(clientId);
             debug('client disconnected:', clientId + '\n');
           } else {
-            handleClientRequest(clientId, msg).then(ret => {
+            handleClientRequest(connections, clientId, msg).then(ret => {
               // Send the response to the client via stdout
               // one response per line in the format "PIME_MSG|<client_id>|<json reply>"
               const reply_line =
