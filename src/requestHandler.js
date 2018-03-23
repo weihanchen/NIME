@@ -1,8 +1,7 @@
+const textService = require('./textService');
 
-let textService = require('./textService');
-
-function initService(request, services) {
-  let response = {success: false, seqNum: request['seqNum']};
+const initService = async (request, services) => {
+  let response = { success: false, seqNum: request['seqNum'] };
   let service = null;
   let state = {
     env: {}
@@ -13,7 +12,7 @@ function initService(request, services) {
     service = services(request);
   } else {
     // Search the service
-    services.forEach((tmpService) => {
+    services.forEach(tmpService => {
       if (tmpService['guid'].toLowerCase() === request['id'].toLowerCase()) {
         service = tmpService['textService'];
       }
@@ -21,39 +20,39 @@ function initService(request, services) {
   }
 
   // Store environment
-  state.env['id']              = request['id'];
+  state.env['id'] = request['id'];
   state.env['isWindows8Above'] = request['isWindows8Above'];
-  state.env['isMetroApp']      = request['isMetroApp'];
-  state.env['isUiLess']        = request['isUiLess'];
-  state.env['isConsole']       = request['isConsole'];
+  state.env['isMetroApp'] = request['isMetroApp'];
+  state.env['isUiLess'] = request['isUiLess'];
+  state.env['isConsole'] = request['isConsole'];
 
   if (service !== null) {
     // Use the text reducer to change state
-    state    = service.textReducer(request, state);
+    state = await service.textReducer(request, state);
     // Handle response
-    response = service.response(request, state);
+    response = await service.response(request, state);
   } else {
-    state    = {};
-    response = {success: false, seqNum: request['seqNum']};
+    state = {};
+    response = { success: false, seqNum: request['seqNum'] };
   }
 
-  return {service, state, response};
-}
+  return { service, state, response };
+};
 
-function handleRequest(request, {state, service = textService}) {
-  let response = {success: false, seqNum: request['seqNum']};
+const handleRequest = async (request, { state, service = textService }) => {
+  let response = { success: false, seqNum: request['seqNum'] };
 
   if (request['method'] === 'onActivate') {
     state.env['isKeyboardOpen'] = request['isKeyboardOpen'];
   }
 
   // Use the text reducer to change state
-  state    = service.textReducer(request, state);
+  state = await service.textReducer(request, state);
   // Handle response
-  response = service.response(request, state);
+  response = await service.response(request, state);
 
-  return {state, response};
-}
+  return { state, response };
+};
 
 module.exports = {
   initService,

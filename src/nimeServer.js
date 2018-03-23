@@ -2,19 +2,17 @@
 
 const debug = require('debug')('nime:server');
 const stdio = require('stdio');
+const { promisify } = require('util');
 
-const {
-  initService,
-  handleRequest
-} = require('./requestHandler');
+const { initService, handleRequest } = require('./requestHandler');
 
-function createServer(services = []) {
+stdio.readByLines = promisify(stdio.readByLines);
 
+const createServer = async (services = []) => {
   const connections = {};
 
   // handle client requests
-  function handleClientRequest(clientId, request) {
-
+  const handleClientRequest = async (clientId, request) => {
     debug(clientId);
     debug(request);
 
@@ -24,26 +22,25 @@ function createServer(services = []) {
     }
 
     if (request['method'] === 'init') {
-
-      let {service, state, response} = initService(request, services);
-      connections[clientId] = {service, state}
+      let { service, state, response } = await initService(request, services);
+      connections[clientId] = { service, state };
       debug(response);
       return response;
-
     } else {
-
-      let {state, response} = handleRequest(request, connections[clientId]);
+      let { state, response } = await handleRequest(
+        request,
+        connections[clientId]
+      );
       connections[clientId].state = state;
       debug(response);
       return response;
     }
 
     return {};
-  }
+  };
 
   // Delete client, http url: /clientId
-  function removeClient(clientId) {
-
+  const removeClient = clientId => {
     debug(clientId);
 
     if (clientId === '') {
@@ -59,9 +56,9 @@ function createServer(services = []) {
     delete connections[clientId];
   };
 
-  function listen() {
-
-    stdio.readByLines(function lineHandler(line) {
+  const listen = async () => {
+    try {
+      const line = await stdio.readByLines();
       line = line.trim();
       const parts = line.split('|', 2);
 
@@ -72,28 +69,30 @@ function createServer(services = []) {
         let client;
 
         if (!connections.hasOwnProperty(clientId)) {
-          client = {service: null, state: null};
+          client = { service: null, state: null };
           connections[clientId] = client;
-          debug("new client", clientId);
+          debug('new client', clientId);
         }
 
-        if (msg['method'] === "close") { // special handling for closing a client
+        if (msg['method'] === 'close') {
+          // special handling for closing a client
           removeClient(clientId);
-          debug("client disconnected:", clientId + "\n");
+          debug('client disconnected:', clientId + '\n');
         } else {
-          const ret = handleClientRequest(clientId, msg)
+          const ret = await handleClientRequest(clientId, msg);
           // Send the response to the client via stdout
           // one response per line in the format "PIME_MSG|<client_id>|<json reply>"
-          const reply_line = "PIME_MSG|" + clientId + "|" + JSON.stringify(ret) + "\n";
+          const reply_line =
+            'PIME_MSG|' + clientId + '|' + JSON.stringify(ret) + '\n';
           process.stdout.write(reply_line);
         }
       }
-    }, function (err) {
-        console.log('Finished');
-    });
-  }
-  return {listen};
-}
+    } catch (error) {
+      console.log('finished');
+    }
+  };
+  return { listen };
+};
 
 module.exports = {
   createServer
