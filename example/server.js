@@ -1,30 +1,28 @@
-(async () => {
-  'use strict';
+'use strict';
 
-  let fs = require('fs');
-  let path = require('path');
+let fs = require('fs');
+let path = require('path');
 
-  let NIME = require('../index');
+let NIME = require('../index');
 
-  let imeDir = fs.readdirSync(process.cwd());
-  let services = [];
+let imeDir = fs.readdirSync(process.cwd());
+let services = [];
 
-  imeDir.forEach(dir => {
-    if (fs.lstatSync(path.join(process.cwd(), dir)).isDirectory()) {
-      let configFile = fs.readFileSync(
-        path.join(process.cwd(), dir, 'ime.json'),
-        'utf8'
-      );
-      let config = JSON.parse(configFile);
-      let textService = require(`./${dir}/${config.moduleName}`);
+imeDir.forEach(dir => {
+  if (fs.lstatSync(path.join(process.cwd(), dir)).isDirectory()) {
+    let configFile = fs.readFileSync(
+      path.join(process.cwd(), dir, 'ime.json'),
+      'utf8'
+    );
+    let config = JSON.parse(configFile);
+    let textService = require(`./${dir}/${config.moduleName}`);
 
-      config['textService'] = textService;
+    config['textService'] = textService;
 
-      services.push(config);
-    }
-  });
+    services.push(config);
+  }
+});
 
-  let server = await NIME.createServer(services);
+let server = NIME.createServer(services);
 
-  await server.listen();
-})();
+server.listen();

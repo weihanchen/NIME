@@ -5,7 +5,7 @@ const stdio = require('stdio');
 
 const { initService, handleRequest } = require('./requestHandler');
 
-const createServer = async (services = []) => {
+const createServer = (services = []) => {
   const connections = {};
 
   // handle client requests
@@ -53,7 +53,7 @@ const createServer = async (services = []) => {
     delete connections[clientId];
   };
 
-  const listen = async () => {
+  const listen = () => {
     stdio.readByLines(
       function lineHandler(line) {
         line = line.trim();
