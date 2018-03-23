@@ -5,36 +5,36 @@ const stdio = require('stdio');
 
 const { initService, handleRequest } = require('./requestHandler');
 
+ // handle client requests
+ const handleClientRequest = async (clientId, request) => {
+  debug(clientId);
+  debug(request);
+
+  if (!connections.hasOwnProperty(clientId)) {
+    debug(`Connection not found ${clientId}`);
+    return {};
+  }
+
+  if (request['method'] === 'init') {
+    let { service, state, response } = await initService(request, services);
+    connections[clientId] = { service, state };
+    debug(response);
+    return response;
+  } else {
+    let { state, response } = await handleRequest(
+      request,
+      connections[clientId]
+    );
+    connections[clientId].state = state;
+    debug(response);
+    return response;
+  }
+
+  return {};
+};
+
 const createServer = (services = []) => {
   const connections = {};
-
-  // handle client requests
-  const handleClientRequest = async (clientId, request) => {
-    debug(clientId);
-    debug(request);
-
-    if (!connections.hasOwnProperty(clientId)) {
-      debug(`Connection not found ${clientId}`);
-      return {};
-    }
-
-    if (request['method'] === 'init') {
-      let { service, state, response } = await initService(request, services);
-      connections[clientId] = { service, state };
-      debug(response);
-      return response;
-    } else {
-      let { state, response } = await handleRequest(
-        request,
-        connections[clientId]
-      );
-      connections[clientId].state = state;
-      debug(response);
-      return response;
-    }
-
-    return {};
-  };
 
   // Delete client, http url: /clientId
   const removeClient = clientId => {
