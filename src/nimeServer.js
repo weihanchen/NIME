@@ -66,6 +66,7 @@ const createServer = async (services = []) => {
         const clientId = parts[0];
         const msgText = parts[1];
         const msg = JSON.parse(msgText);
+        debug('msg: ', msgText);
         let client;
 
         if (!connections.hasOwnProperty(clientId)) {
